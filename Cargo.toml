@@ -2,5 +2,9 @@
 name = "cc"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+keywords = ["math", "complex"]
+repository = "https://github.com/Definitely-Not-A-Dolphin/CC"
+readme = "README.md"
 
 [dependencies]
