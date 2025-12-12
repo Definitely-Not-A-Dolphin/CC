@@ -126,7 +126,7 @@ impl Complex {
         Complex::ln(self) / f64::ln(10f64)
     }
 
-    /// Returns the logarithm base 10 of this [`Complex`].
+    /// Returns the logarithm base n of this [`Complex`].
     pub fn logn(self, base: f64) -> Complex {
         Complex::ln(self) / f64::ln(base)
     }
