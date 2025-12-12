@@ -41,7 +41,7 @@ impl Complex {
 
     /// Returns the absolute value of this [`Complex`].
     pub fn abs(self) -> f64 {
-        self.square_abs().sqrt()
+        Complex::square_abs(self).sqrt()
     }
 
     /// Returns the arg on the interval [0, 2PI) of this [`Complex`].
@@ -49,7 +49,7 @@ impl Complex {
         if self == Complex::new(0f64, 0f64) {
             return 0f64;
         };
-        self.imag.signum() * f64::acos(self.real / self.abs())
+        self.imag.signum() * f64::acos(self.real / Complex::abs(self))
     }
 
     /// Returns the square root of this [`Complex`].
