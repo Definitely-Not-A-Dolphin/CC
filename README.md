@@ -5,4 +5,4 @@ Hobby project, don't use in an actual project unless you want to make me feel im
 = To Do list
 
 - exponentiation by squaring
-- take `self` instead of `&self`
+- ~~take `self` instead of `&self`~~

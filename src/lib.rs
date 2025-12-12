@@ -1,4 +1,4 @@
-use std::f64::consts::TAU;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Complex {
@@ -6,15 +6,8 @@ pub struct Complex {
     imag: f64,
 }
 
-fn factorial(n: u32) -> u64 {
-    if n == 0 {
-        return 1;
-    };
-    let mut prod = 1u64;
-    for i in 1..=(n as u64) {
-        prod *= i;
-    }
-    prod
+fn expimag(exponent: f64) -> Complex {
+    Complex::new(f64::cos(exponent), f64::sin(exponent))
 }
 
 impl Complex {
@@ -53,28 +46,22 @@ impl Complex {
 
     /// Returns the arg on the interval [0, 2PI) of this [`Complex`].
     pub fn arg(self) -> f64 {
-        if self.imag > 0f64 {
-            return f64::acos(self.real / self.abs());
-        }
-        TAU - f64::acos(self.real / self.abs())
+        if self == Complex::new(0f64, 0f64) {
+            return 0f64;
+        };
+        self.imag.signum() * f64::acos(self.real / self.abs())
     }
 
-    /// Returns the half-argument square root of this [`Complex`].
+    /// Returns the square root of this [`Complex`].
     pub fn sqrt(self) -> Complex {
         let root_real = ((self.real + self.abs()) / 2f64).sqrt();
         let root_imag = ((-self.real + self.abs()) / 2f64).sqrt();
-        if self.imag >= 0f64 {
-            return Complex::new(root_real, root_imag);
-        };
-        Complex::new(-root_real, root_imag)
+        return Complex::new(root_real, self.imag.signum() * root_imag);
     }
 
     /// Returns the multiplicative inverse of this [`Complex`].
     pub fn inv(self) -> Complex {
-        Complex::new(
-            self.real / self.square_abs(),
-            -self.imag / self.square_abs(),
-        )
+        Complex::conj(self) / Complex::square_abs(self)
     }
 
     /// Returns this [`Complex`] raised to a power using repeated multiplication.
@@ -86,7 +73,7 @@ impl Complex {
             _ => {
                 let mut result = self;
                 for _ in 2..=exponent.abs() {
-                    result = multiply(&result, &self);
+                    result = result * self;
                 }
                 if exponent < 0 {
                     return result.inv();
@@ -98,68 +85,165 @@ impl Complex {
 
     /// Returns this [`Complex`] raised to a power using De Moivre's formula.
     pub fn powf(self, exponent: f64) -> Complex {
+        Complex::abs(self).powf(exponent)
+            * Complex::new(
+                f64::cos(exponent * self.arg()),
+                f64::sin(exponent * self.arg()),
+            )
+    }
+
+    /// Returns this [`Complex`] raised to a complex power.
+    pub fn powc(self, exponent: Complex) -> Complex {
+        Complex::powf(self, exponent.real)
+            * Complex::exp(self.ln() * Complex::new(0f64, exponent.imag))
+    }
+
+    /// Returns e raised to the power of this [`Complex`].
+    pub fn exp(self) -> Complex {
+        f64::exp(self.real) * expimag(self.imag)
+    }
+
+    /// Returns base raised to the power of this [`Complex`].
+    pub fn expf(self, base: f64) -> Complex {
+        if base == 0f64 {
+            return Complex::new(0f64, 0f64);
+        };
+        Complex::exp(base.ln() * self)
+    }
+
+    /// Returns the natural logarithm of the absolute value of this [`Complex`].
+    pub fn ln_abs(self) -> f64 {
+        Complex::square_abs(self).ln() / 2f64
+    }
+
+    /// Returns the natural logarithm of this [`Complex`].
+    pub fn ln(self) -> Complex {
+        Complex::new(Complex::ln_abs(self), Complex::arg(self))
+    }
+
+    /// Returns the logarithm base 10 of this [`Complex`].
+    pub fn log(self) -> Complex {
+        Complex::ln(self) / f64::ln(10f64)
+    }
+
+    /// Returns the logarithm base 10 of this [`Complex`].
+    pub fn logn(self, base: f64) -> Complex {
+        Complex::ln(self) / f64::ln(base)
+    }
+}
+
+impl Add<f64> for Complex {
+    type Output = Complex;
+
+    fn add(self, rhs: f64) -> Complex {
+        Complex::new(self.real + rhs, self.imag)
+    }
+}
+
+impl Add<Complex> for f64 {
+    type Output = Complex;
+
+    fn add(self, rhs: Complex) -> Complex {
+        Complex::new(rhs.real + self, rhs.imag)
+    }
+}
+
+impl Add<Complex> for Complex {
+    type Output = Complex;
+
+    fn add(self, rhs: Complex) -> Complex {
+        Complex::new(self.real + rhs.real, self.imag + rhs.imag)
+    }
+}
+
+impl Sub<f64> for Complex {
+    type Output = Complex;
+
+    fn sub(self, rhs: f64) -> Complex {
+        Complex::new(self.real - rhs, self.imag)
+    }
+}
+
+impl Sub<Complex> for f64 {
+    type Output = Complex;
+
+    fn sub(self, rhs: Complex) -> Complex {
+        Complex::new(self - rhs.real, -rhs.imag)
+    }
+}
+
+impl Sub<Complex> for Complex {
+    type Output = Complex;
+
+    fn sub(self, rhs: Complex) -> Complex {
+        Complex::new(self.real - rhs.real, self.imag + rhs.imag)
+    }
+}
+
+impl Neg for Complex {
+    type Output = Complex;
+
+    fn neg(self) -> Complex {
+        Complex::new(-self.real, -self.imag)
+    }
+}
+
+impl Mul<f64> for Complex {
+    type Output = Complex;
+
+    fn mul(self, rhs: f64) -> Complex {
+        Complex::new(self.real * rhs, self.imag * rhs)
+    }
+}
+
+impl Mul<Complex> for f64 {
+    type Output = Complex;
+
+    fn mul(self, rhs: Complex) -> Complex {
+        Complex::new(rhs.real * self, rhs.imag * self)
+    }
+}
+
+impl Mul<Complex> for Complex {
+    type Output = Complex;
+
+    fn mul(self, rhs: Complex) -> Complex {
         Complex::new(
-            self.abs().powf(exponent) * f64::cos(exponent * self.arg()),
-            self.abs().powf(exponent) * f64::sin(exponent * self.arg()),
+            self.real * rhs.real - self.imag * rhs.imag,
+            self.real * rhs.imag + self.imag * rhs.real,
         )
     }
+}
 
-    pub fn exp(self) -> Complex {
-        let mut result = Complex::new(0f64, 0f64);
-        for i in 0..=216 {
-            result = Complex::new(
-                self.powi(i).real / factorial(i as u32) as f64,
-                self.powi(i).imag / factorial(i as u32) as f64,
-            );
-        }
-        return result;
+impl Div<f64> for Complex {
+    type Output = Complex;
+
+    fn div(self, rhs: f64) -> Complex {
+        Complex::new(self.real / rhs, self.imag / rhs)
     }
 }
 
-/// Returns the sum to two [`Complex`] numbers.
-pub fn add(a: &Complex, b: &Complex) -> Complex {
-    Complex::new(a.real() + b.real(), a.imag() + b.imag())
+impl Div<Complex> for f64 {
+    type Output = Complex;
+
+    fn div(self, rhs: Complex) -> Complex {
+        self * rhs.inv()
+    }
 }
 
-/// Returns the difference of two [`Complex`] numbers.
-pub fn subtract(a: &Complex, b: &Complex) -> Complex {
-    Complex::new(a.real() - b.real(), a.imag() - b.imag())
-}
+impl Div<Complex> for Complex {
+    type Output = Complex;
 
-/// Returns the product of two [`Complex`] numbers.
-pub fn multiply(z1: &Complex, z2: &Complex) -> Complex {
-    Complex::new(
-        z1.real() * z2.real() - z1.imag() * z2.imag(),
-        z1.real() * z2.imag() + z1.imag() * z2.real(),
-    )
-}
-
-/// Returns the quotient of two [`Complex`] numbers.
-pub fn divide(z1: &Complex, z2: &Complex) -> Complex {
-    let common_denominator = z2.real().powi(2) + z2.imag().powi(2);
-    Complex::new(
-        (z1.real() * z2.real() + z1.imag() * z2.imag()) / common_denominator,
-        (z1.imag() * z2.real() - z1.real() * z2.imag()) / common_denominator,
-    )
+    fn div(self, rhs: Complex) -> Complex {
+        self * rhs.inv()
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::f64;
 
-    #[test]
-    fn simple_binary_operators() {
-        let z1 = Complex::new(3f64, 4f64);
-        let z2 = Complex::new(-2.5, 6.23);
-        assert_eq!(add(&z1, &z2), Complex::new(0.5, 10.23));
-        // God I love floating point arithmetic
-        assert_eq!(subtract(&z1, &z2), Complex::new(5.5, -2.2300000000000004));
-        assert_eq!(multiply(&z1, &z2), Complex::new(-32.42, 8.690000000000001));
-        assert_eq!(
-            divide(&z1, &z2),
-            Complex::new(0.38657077107776017, -0.6366656384742215)
-        );
-    }
+    use super::*;
 
     #[test]
     fn complex_unary_operators() {
@@ -182,13 +266,65 @@ mod tests {
 
         // arg
         assert_eq!(z1.arg(), 0.9272952180016123);
-        assert_eq!(z2.arg(), 6.111806180790079);
+        assert_eq!(z2.arg(), -0.1713791263895069);
 
         // inv
         assert_eq!(z1.inv(), Complex::new(0.12, -0.16));
         assert_eq!(
             z2.inv(),
             Complex::new(0.1867145421903052, 0.03231597845601436)
+        );
+
+        // exp
+        assert_eq!(
+            Complex::new(0f64, f64::consts::PI).exp(),
+            Complex::new(-1f64, 1.2246467991473532e-16)
+        );
+        assert_eq!(
+            z1.exp(),
+            Complex::new(-13.128783081462158, -15.200784463067954)
+        );
+
+        // ln
+        assert_eq!(
+            Complex::new(0f64, 0f64).ln(),
+            Complex::new(f64::NEG_INFINITY, 0f64)
+        );
+        assert_eq!(
+            Complex::new(-1f64, 0f64).ln(),
+            Complex::new(0f64, f64::consts::PI)
+        );
+    }
+
+    #[test]
+    fn simple_binary_operators() {
+        let z1 = Complex::new(3f64, 4f64);
+        let z2 = Complex::new(-2.5, 6.23);
+
+        // add
+        assert_eq!(z1 + 5f64, Complex::new(8f64, 4f64));
+        assert_eq!(5f64 + z1, Complex::new(8f64, 4f64));
+        assert_eq!(z1 + z2, Complex::new(0.5, 10.23));
+
+        // subtract
+        assert_eq!(z1 - 5f64, Complex::new(-2f64, 4f64));
+        assert_eq!(5f64 - z1, Complex::new(2f64, -4f64));
+        assert_eq!(z1 - z2, Complex::new(5.5, 10.23));
+
+        // multiply
+        assert_eq!(z1 * -0.5, Complex::new(-1.5, -2f64));
+        assert_eq!(1.8 * z2, Complex::new(-4.5, 11.214));
+        assert_eq!(z1 * z2, Complex::new(-32.42, 8.690000000000001));
+
+        // dividing
+        assert_eq!(z1 / -0.5, Complex::new(-6f64, -8f64));
+        assert_eq!(
+            1.8 / z2,
+            Complex::new(-0.0998604173277796, -0.24885215998082677)
+        );
+        assert_eq!(
+            z1 / z2,
+            Complex::new(0.38657077107776017, -0.6366656384742215)
         );
     }
 
@@ -197,11 +333,28 @@ mod tests {
         let z1 = Complex::new(3f64, 4f64);
         let z2 = Complex::new(5.2, -0.9);
 
+        // powi
+        assert_eq!(z1.powi(6), Complex::new(11753f64, -10296f64));
+        assert_eq!(
+            z2.powi(-2),
+            Complex::new(0.03381799780176568, 0.012067726245692974)
+        );
+
         // powf
         assert_eq!(z1.powf(3f64), Complex::new(-117f64, 43.99999999999998));
         assert_eq!(
             z2.powf(-2.5),
-            Complex::new(-0.014217542838549323, -0.006493773098977875)
+            Complex::new(0.014217542838549325, 0.00649377309897787)
+        );
+
+        // powc
+        assert_eq!(
+            z1.powc(z2),
+            Complex::new(-9667.467998399987, -2282.430226186542)
+        );
+        assert_eq!(
+            z2.powc(z1),
+            Complex::new(288.7067987011787, -41.7623644411436)
         );
     }
 }
