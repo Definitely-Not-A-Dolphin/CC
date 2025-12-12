@@ -1,4 +1,4 @@
-# CC
+# CCMath
 
 Hobby project, don't use in an actual project unless you want to make me feel important.
 
