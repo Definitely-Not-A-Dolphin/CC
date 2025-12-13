@@ -9,3 +9,4 @@ repository = "https://github.com/Definitely-Not-A-Dolphin/CC"
 readme = "README.md"
 
 [dependencies]
+num-traits = "0.2.19"
