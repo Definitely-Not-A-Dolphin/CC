@@ -30,6 +30,10 @@ impl<T: Float> Complex<T> {
         Complex { real, imag }
     }
 
+    pub fn i() -> Complex<T> {
+        Complex::new(T::zero(), T::one())
+    }
+
     /// Returns the real part of this [`Complex`].
     pub fn real(self) -> T {
         self.real
@@ -140,13 +144,13 @@ impl<T: Float> Complex<T> {
     }
 
     pub fn sin(self) -> Complex<T> {
-        let e_to_iself = Complex::exp(self * Complex::new(T::zero(), T::one()));
-        (e_to_iself - Complex::inv(e_to_iself)) / (Complex::new(T::zero(), T::one()) * T::two())
+        let e_to_i_self = Complex::exp(self * Complex::i());
+        (e_to_i_self - Complex::inv(e_to_i_self)) / (Complex::i() * T::two())
     }
 
     pub fn cos(self) -> Complex<T> {
-        let e_to_iself = Complex::exp(self * Complex::new(T::zero(), T::one()));
-        (e_to_iself + Complex::inv(e_to_iself)) / T::two()
+        let e_to_i_self = Complex::exp(self * Complex::i());
+        (e_to_i_self + Complex::inv(e_to_i_self)) / T::two()
     }
 }
 
