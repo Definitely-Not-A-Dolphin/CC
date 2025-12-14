@@ -10,6 +10,8 @@ pub struct Complex<T: Float> {
     imag: T,
 }
 
+pub type CC<T> = Complex<T>;
+
 trait Numbers: Float {
     fn two() -> Self;
     fn ten() -> Self;
@@ -144,16 +146,37 @@ impl<T: Float> Complex<T> {
     }
 
     pub fn sin(self) -> Complex<T> {
-        let e_to_i_self = Complex::exp(self * Complex::i());
-        (e_to_i_self - Complex::inv(e_to_i_self)) / (Complex::i() * T::two())
+        Complex::new(
+            T::sin(self.real) * T::cosh(self.imag),
+            T::cos(self.real) * T::sinh(self.imag),
+        )
     }
 
     pub fn cos(self) -> Complex<T> {
-        let e_to_i_self = Complex::exp(self * Complex::i());
-        (e_to_i_self + Complex::inv(e_to_i_self)) / T::two()
+        Complex::new(
+            T::cos(self.real) * T::cosh(self.imag),
+            -T::sin(self.real) * T::sinh(self.imag),
+        )
+    }
+
+    pub fn tan(self) -> Complex<T> {
+        Complex::sin(self) / Complex::cos(self)
+    }
+
+    pub fn cot(self) -> Complex<T> {
+        Complex::cos(self) / Complex::sin(self)
+    }
+
+    pub fn sec(self) -> Complex<T> {
+        Complex::cos(self).inv()
+    }
+
+    pub fn csc(self) -> Complex<T> {
+        Complex::sin(self).inv()
     }
 }
 
+/// Operator overloading: Complex<T> + T
 impl<T: Float> Add<T> for Complex<T> {
     type Output = Complex<T>;
 
@@ -162,14 +185,25 @@ impl<T: Float> Add<T> for Complex<T> {
     }
 }
 
-//impl<T: Float> Add<Complex<T>> for T {
-//    type Output = Complex<T>;
-//
-//    fn add(self, rhs: Complex<T>) -> Complex<T> {
-//        Complex::new(rhs.real + self, rhs.imag)
-//    }
-//}
+/// Operator overloading: f32 + Complex<f32>
+impl Add<Complex<f32>> for f32 {
+    type Output = Complex<f32>;
 
+    fn add(self, rhs: Complex<f32>) -> Complex<f32> {
+        Complex::new(self + rhs.real, rhs.imag)
+    }
+}
+
+/// Operator overloading: f64 + Complex<f64>
+impl Add<Complex<f64>> for f64 {
+    type Output = Complex<f64>;
+
+    fn add(self, rhs: Complex<f64>) -> Complex<f64> {
+        Complex::new(self + rhs.real, rhs.imag)
+    }
+}
+
+/// Operator overloading: Complex<T> + Complex<T>
 impl<T: Float> Add<Complex<T>> for Complex<T> {
     type Output = Complex<T>;
 
@@ -178,6 +212,7 @@ impl<T: Float> Add<Complex<T>> for Complex<T> {
     }
 }
 
+/// Operator overloading: Complex<T> - T
 impl<T: Float> Sub<T> for Complex<T> {
     type Output = Complex<T>;
 
@@ -186,14 +221,25 @@ impl<T: Float> Sub<T> for Complex<T> {
     }
 }
 
-//impl<T: Float> Sub<Complex<T>> for T {
-//    type Output = Complex<T>;
-//
-//    fn sub(self, rhs: Complex<T>) -> Complex<T> {
-//        Complex::new(self - rhs.real, -rhs.imag)
-//    }
-//}
+/// Operator overloading: f32 - Complex<f32>
+impl Sub<Complex<f32>> for f32 {
+    type Output = Complex<f32>;
 
+    fn sub(self, rhs: Complex<f32>) -> Complex<f32> {
+        Complex::new(self - rhs.real, -rhs.imag)
+    }
+}
+
+/// Operator overloading: f64 - Complex<f64>
+impl Sub<Complex<f64>> for f64 {
+    type Output = Complex<f64>;
+
+    fn sub(self, rhs: Complex<f64>) -> Complex<f64> {
+        Complex::new(self - rhs.real, -rhs.imag)
+    }
+}
+
+/// Operator overloading: Complex<T> - Complex<T>
 impl<T: Float> Sub<Complex<T>> for Complex<T> {
     type Output = Complex<T>;
 
@@ -202,6 +248,7 @@ impl<T: Float> Sub<Complex<T>> for Complex<T> {
     }
 }
 
+/// Operator overloading: -Complex<T>
 impl<T: Float> Neg for Complex<T> {
     type Output = Complex<T>;
 
@@ -210,6 +257,7 @@ impl<T: Float> Neg for Complex<T> {
     }
 }
 
+/// Operator overloading: T * Complex<T>
 impl<T: Float> Mul<T> for Complex<T> {
     type Output = Complex<T>;
 
@@ -218,14 +266,25 @@ impl<T: Float> Mul<T> for Complex<T> {
     }
 }
 
-//impl<T: Float> Mul<Complex<T>> for T {
-//    type Output = Complex<T>;
-//
-//    fn mul(self, rhs: Complex<T>) -> Complex<T> {
-//        Complex::new(rhs.real * self, rhs.imag * self)
-//    }
-//}
+/// Operator overloading: Complex<f32> * f32
+impl Mul<Complex<f32>> for f32 {
+    type Output = Complex<f32>;
 
+    fn mul(self, rhs: Complex<f32>) -> Complex<f32> {
+        Complex::new(rhs.real * self, rhs.imag * self)
+    }
+}
+
+/// Operator overloading: Complex<f64> * f64
+impl Mul<Complex<f64>> for f64 {
+    type Output = Complex<f64>;
+
+    fn mul(self, rhs: Complex<f64>) -> Complex<f64> {
+        Complex::new(rhs.real * self, rhs.imag * self)
+    }
+}
+
+/// Operator overloading: Complex<T> * Complex<T>
 impl<T: Float> Mul<Complex<T>> for Complex<T> {
     type Output = Complex<T>;
 
@@ -237,6 +296,7 @@ impl<T: Float> Mul<Complex<T>> for Complex<T> {
     }
 }
 
+/// Operator overloading: Complex<T> / T
 impl<T: Float> Div<T> for Complex<T> {
     type Output = Complex<T>;
 
@@ -245,14 +305,25 @@ impl<T: Float> Div<T> for Complex<T> {
     }
 }
 
-//impl<T: Float> Div<Complex<T>> for T {
-//    type Output = Complex<T>;
-//
-//    fn div(self, rhs: Complex<T>) -> Complex<T> {
-//        rhs.inv() * self
-//    }
-//}
+/// Operator overloading: f32 / Complex<f32>
+impl Div<Complex<f32>> for f32 {
+    type Output = Complex<f32>;
 
+    fn div(self, rhs: Complex<f32>) -> Complex<f32> {
+        Complex::conj(rhs) / Complex::square_abs(rhs) * self
+    }
+}
+
+/// Operator overloading: f64 / Complex<f64>
+impl Div<Complex<f64>> for f64 {
+    type Output = Complex<f64>;
+
+    fn div(self, rhs: Complex<f64>) -> Complex<f64> {
+        Complex::conj(rhs) / Complex::square_abs(rhs) * self
+    }
+}
+
+/// Operator overloading: Complex<T> / Complex<T>
 impl<T: Float> Div<Complex<T>> for Complex<T> {
     type Output = Complex<T>;
 
@@ -266,127 +337,4 @@ impl<T: Float> Div<Complex<T>> for Complex<T> {
 }
 
 #[cfg(test)]
-mod tests {
-    use std::f64;
-
-    use super::*;
-
-    #[test]
-    fn complex_unary_operators() {
-        let z1 = Complex::new(3f64, 4f64);
-        let z2 = Complex::new(5.2, -0.9);
-
-        // real and imag
-        assert_eq!(z1.real(), 3f64);
-        assert_eq!(z1.imag(), 4f64);
-        assert_eq!(z2.real(), 5.2);
-        assert_eq!(z2.imag(), -0.9);
-
-        // abs
-        assert_eq!(z1.abs(), 5f64);
-        assert_eq!(z2.abs(), f64::sqrt(27.85));
-
-        // square abs
-        assert_eq!(z1.square_abs(), 25f64);
-        assert_eq!(z2.square_abs(), 27.85);
-
-        // arg
-        assert_eq!(z1.arg(), 0.9272952180016123);
-        assert_eq!(z2.arg(), -0.1713791263895069);
-
-        // inv
-        assert_eq!(z1.inv(), Complex::new(0.12, -0.16));
-        assert_eq!(
-            z2.inv(),
-            Complex::new(0.1867145421903052, 0.03231597845601436)
-        );
-
-        // exp
-        assert_eq!(
-            Complex::new(0f64, f64::consts::PI).exp(),
-            Complex::new(-1f64, 1.2246467991473532e-16)
-        );
-        assert_eq!(
-            z1.exp(),
-            Complex::new(-13.128783081462158, -15.200784463067954)
-        );
-
-        // ln
-        assert_eq!(
-            Complex::new(0f64, 0f64).ln(),
-            Complex::new(f64::NEG_INFINITY, 0f64)
-        );
-        assert_eq!(
-            Complex::new(-1f64, 0f64).ln(),
-            Complex::new(0f64, f64::consts::PI)
-        );
-    }
-
-    #[test]
-    fn simple_binary_operators() {
-        let z1 = Complex::new(3f32, 4f32);
-        let z2 = Complex::new(-2.5, 6.23);
-
-        // add
-        assert_eq!(z1 + 5f32, Complex::new(8f32, 4f32));
-        //assert_eq!(5f64 + z1, Complex::new(8f64, 4f64));
-        assert_eq!(z1 + z2, Complex::new(0.5, 10.23));
-
-        // subtract
-        assert_eq!(z1 - 5f32, Complex::new(-2f32, 4f32));
-        //assert_eq!(5f64 - z1, Complex::new(2f64, -4f64));
-        assert_eq!(z1 - z2, Complex::new(5.5, 10.23));
-
-        // multiply
-        assert_eq!(z1 * -0.5, Complex::new(-1.5, -2f32));
-        //assert_eq!(1.8 * z2, Complex::new(-4.5, 11.214));
-        assert_eq!(
-            z1 * z2,
-            Complex::new(-32.42, z1.real * z2.imag + z1.imag * z2.real)
-        );
-
-        // dividing
-        assert_eq!(z1 / -0.5, Complex::new(-6f32, -8f32));
-        // assert_eq!(
-        //     1.8 / z2,
-        //     Complex::new(-0.0998604173277796, -0.24885215998082677)
-        // );
-        assert_eq!(
-            z1 / z2,
-            Complex::new(
-                0.38657075,
-                z1.real * z2.inv().imag + z1.imag * z2.inv().real
-            )
-        );
-    }
-
-    #[test]
-    fn complex_binary_operators() {
-        let z1 = Complex::new(3f64, 4f64);
-        let z2 = Complex::new(5.2, -0.9);
-
-        // powi
-        assert_eq!(z1.powi(6), Complex::new(11753f64, -10296f64));
-        assert_eq!(
-            z2.powi(-2),
-            Complex::new(0.03381799780176568, 0.012067726245692974)
-        );
-
-        // powf
-        assert_eq!(z1.powf(3f64), Complex::new(-117f64, 43.99999999999998));
-        assert_eq!(
-            z2.powf(-2.5),
-            Complex::new(0.014217542838549325, 0.00649377309897787)
-        );
-
-        // powc
-        assert_eq!(
-            z1.powc(z2),
-            Complex::new(-9667.467998399987, -2282.430226186542)
-        );
-        assert_eq!(
-            z2.powc(z1),
-            Complex::new(288.7067987011787, -41.7623644411436)
-        );
-    }
-}
+mod tests;
