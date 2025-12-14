@@ -1,7 +1,5 @@
 /// CCMath: a crate for doing math with complex numbers
-//#![warn(missing_docs, clippy::all)]
 use num_traits::{self, Float};
-use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// Struct representing a complex number
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -10,7 +8,9 @@ pub struct Complex<T: Float> {
     imag: T,
 }
 
+/// Alias for [`Complex`]
 pub type CC<T> = Complex<T>;
+// Personal tip: use this alias when code is getting a little hard to read, it cleans things up!
 
 trait Numbers: Float {
     fn two() -> Self;
@@ -28,12 +28,12 @@ impl<T: Float> Numbers for T {
 
 impl<T: Float> Complex<T> {
     /// Creates a new [`Complex`].
-    pub fn new(real: T, imag: T) -> Complex<T> {
-        Complex { real, imag }
+    pub fn new(real: T, imag: T) -> Self {
+        Self { real, imag }
     }
 
-    pub fn i() -> Complex<T> {
-        Complex::new(T::zero(), T::one())
+    pub fn i() -> Self {
+        Self::new(T::zero(), T::one())
     }
 
     /// Returns the real part of this [`Complex`].
@@ -47,8 +47,8 @@ impl<T: Float> Complex<T> {
     }
 
     /// Returns the conjugate of this [`Complex`].
-    pub fn conj(self) -> Complex<T> {
-        Complex::new(self.real, -self.imag)
+    pub fn conj(self) -> Self {
+        Self::new(self.real, -self.imag)
     }
 
     /// Returns the square of the absolute value of this [`Complex`].
@@ -58,39 +58,39 @@ impl<T: Float> Complex<T> {
 
     /// Returns the absolute value of this [`Complex`].
     pub fn abs(self) -> T {
-        Complex::square_abs(self).sqrt()
+        Self::square_abs(self).sqrt()
     }
 
     /// Returns the arg on the interval (-PI, PI] of this [`Complex`].
     pub fn arg(self) -> T {
-        if self == Complex::new(T::zero(), T::zero()) {
+        if self == Self::new(T::zero(), T::zero()) {
             return T::zero();
         };
-        self.imag.signum() * T::acos(self.real / Complex::abs(self))
+        self.imag.signum() * T::acos(self.real / Self::abs(self))
     }
 
     /// Returns the square root of this [`Complex`].
-    pub fn sqrt(self) -> Complex<T> {
+    pub fn sqrt(self) -> Self {
         let root_real = ((self.real + self.abs()) / T::two()).sqrt();
         let root_imag = ((-self.real + self.abs()) / T::two()).sqrt();
-        Complex::new(root_real, self.imag.signum() * root_imag)
+        Self::new(root_real, self.imag.signum() * root_imag)
     }
 
     /// Returns the multiplicative inverse of this [`Complex`].
-    pub fn inv(self) -> Complex<T> {
-        Complex::conj(self) / Complex::square_abs(self)
+    pub fn inv(self) -> Self {
+        Self::conj(self) / Self::square_abs(self)
     }
 
     /// Returns this [`Complex`] raised to a power using repeated multiplication.
-    pub fn powi(self, exponent: i64) -> Complex<T> {
+    pub fn powi(self, exponent: i64) -> Self {
         match exponent {
-            0 => Complex::new(T::one(), T::zero()),
+            0 => Self::new(T::one(), T::zero()),
             1 => self,
             -1 => self.inv(),
             _ => {
                 let mut result = self;
                 for _ in 2..=exponent.abs() {
-                    result = result * self;
+                    result *=  self;
                 }
                 if exponent < 0 {
                     return result.inv();
@@ -101,240 +101,91 @@ impl<T: Float> Complex<T> {
     }
 
     /// Returns this [`Complex`] raised to a power using De Moivre's formula.
-    pub fn powf(self, exponent: T) -> Complex<T> {
-        Complex::new(T::cos(self.arg() * exponent), T::sin(self.arg() * exponent))
-            * T::powf(Complex::abs(self), exponent)
+    pub fn powf(self, exponent: T) -> Self {
+        Self::new(T::cos(self.arg() * exponent), T::sin(self.arg() * exponent))
+            * T::powf(Self::abs(self), exponent)
     }
 
     /// Returns this [`Complex`] raised to a complex power.
-    pub fn powc(self, exponent: Complex<T>) -> Complex<T> {
-        Complex::powf(self, exponent.real)
-            * Complex::exp(self.ln() * Complex::new(T::zero(), exponent.imag))
+    pub fn powc(self, exponent: Self) -> Self {
+        Self::powf(self, exponent.real) * Self::exp(self.ln() * Self::new(T::zero(), exponent.imag))
     }
 
     /// Returns e raised to the power of this [`Complex`].
-    pub fn exp(self) -> Complex<T> {
-        Complex::new(T::cos(self.imag), T::sin(self.imag)) * T::exp(self.real)
+    pub fn exp(self) -> Self {
+        Self::new(T::cos(self.imag), T::sin(self.imag)) * T::exp(self.real)
     }
 
     /// Returns base raised to the power of this [`Complex`].
-    pub fn expf(self, base: T) -> Complex<T> {
+    pub fn expf(self, base: T) -> Self {
         if base == T::zero() {
-            return Complex::new(T::zero(), T::zero());
+            return Self::new(T::zero(), T::zero());
         };
-        Complex::exp(self * base.ln())
+        Self::exp(self * base.ln())
     }
 
     /// Returns the natural logarithm of the absolute value of this [`Complex`].
     pub fn ln_abs(self) -> T {
-        Complex::square_abs(self).ln() / (T::one() + T::one())
+        T::ln(Self::square_abs(self)) / (T::one() + T::one())
     }
 
     /// Returns the natural logarithm of this [`Complex`].
-    pub fn ln(self) -> Complex<T> {
-        Complex::new(Complex::ln_abs(self), Complex::arg(self))
+    pub fn ln(self) -> Self {
+        Self::new(Self::ln_abs(self), Self::arg(self))
     }
 
     /// Returns the logarithm base 10 of this [`Complex`].
-    pub fn log(self) -> Complex<T> {
-        Complex::ln(self) / T::ln(T::ten())
+    pub fn log(self) -> Self {
+        Self::ln(self) / T::ln(T::ten())
     }
 
     /// Returns the logarithm base n of this [`Complex`].
-    pub fn logn(self, base: T) -> Complex<T> {
-        Complex::ln(self) / T::ln(base)
+    pub fn logn(self, base: T) -> Self {
+        Self::ln(self) / T::ln(base)
     }
 
-    pub fn sin(self) -> Complex<T> {
-        Complex::new(
+    /// Returns the sine of this [`Complex`].
+    pub fn sin(self) -> Self {
+        Self::new(
             T::sin(self.real) * T::cosh(self.imag),
             T::cos(self.real) * T::sinh(self.imag),
         )
     }
 
-    pub fn cos(self) -> Complex<T> {
-        Complex::new(
+    pub fn arcsin(self) -> Self {
+        -Self::i() * Self::ln(Self::sqrt(-self.powi(2) + T::one()) + self * Self::i())
+    }
+
+    /// Returns the cosine of this [`Complex`].
+    pub fn cos(self) -> Self {
+        Self::new(
             T::cos(self.real) * T::cosh(self.imag),
             -T::sin(self.real) * T::sinh(self.imag),
         )
     }
 
-    pub fn tan(self) -> Complex<T> {
-        Complex::sin(self) / Complex::cos(self)
+    /// Returns the tangent of this [`Complex`].
+    pub fn tan(self) -> Self {
+        Self::sin(self) / Self::cos(self)
     }
 
-    pub fn cot(self) -> Complex<T> {
-        Complex::cos(self) / Complex::sin(self)
+    /// Returns the cotangent of this [`Complex`].
+    pub fn cot(self) -> Self {
+        Self::cos(self) / Self::sin(self)
     }
 
-    pub fn sec(self) -> Complex<T> {
-        Complex::cos(self).inv()
+    /// Returns the secant of this [`Complex`].
+    pub fn sec(self) -> Self {
+        Self::cos(self).inv()
     }
 
-    pub fn csc(self) -> Complex<T> {
-        Complex::sin(self).inv()
-    }
-}
-
-/// Operator overloading: Complex<T> + T
-impl<T: Float> Add<T> for Complex<T> {
-    type Output = Complex<T>;
-
-    fn add(self, rhs: T) -> Complex<T> {
-        Complex::new(self.real + rhs, self.imag)
+    /// Returns the cosecant of this [`Complex`].
+    pub fn csc(self) -> Self {
+        Self::sin(self).inv()
     }
 }
 
-/// Operator overloading: f32 + Complex<f32>
-impl Add<Complex<f32>> for f32 {
-    type Output = Complex<f32>;
-
-    fn add(self, rhs: Complex<f32>) -> Complex<f32> {
-        Complex::new(self + rhs.real, rhs.imag)
-    }
-}
-
-/// Operator overloading: f64 + Complex<f64>
-impl Add<Complex<f64>> for f64 {
-    type Output = Complex<f64>;
-
-    fn add(self, rhs: Complex<f64>) -> Complex<f64> {
-        Complex::new(self + rhs.real, rhs.imag)
-    }
-}
-
-/// Operator overloading: Complex<T> + Complex<T>
-impl<T: Float> Add<Complex<T>> for Complex<T> {
-    type Output = Complex<T>;
-
-    fn add(self, rhs: Complex<T>) -> Complex<T> {
-        Complex::new(self.real + rhs.real, self.imag + rhs.imag)
-    }
-}
-
-/// Operator overloading: Complex<T> - T
-impl<T: Float> Sub<T> for Complex<T> {
-    type Output = Complex<T>;
-
-    fn sub(self, rhs: T) -> Complex<T> {
-        Complex::new(self.real - rhs, self.imag)
-    }
-}
-
-/// Operator overloading: f32 - Complex<f32>
-impl Sub<Complex<f32>> for f32 {
-    type Output = Complex<f32>;
-
-    fn sub(self, rhs: Complex<f32>) -> Complex<f32> {
-        Complex::new(self - rhs.real, -rhs.imag)
-    }
-}
-
-/// Operator overloading: f64 - Complex<f64>
-impl Sub<Complex<f64>> for f64 {
-    type Output = Complex<f64>;
-
-    fn sub(self, rhs: Complex<f64>) -> Complex<f64> {
-        Complex::new(self - rhs.real, -rhs.imag)
-    }
-}
-
-/// Operator overloading: Complex<T> - Complex<T>
-impl<T: Float> Sub<Complex<T>> for Complex<T> {
-    type Output = Complex<T>;
-
-    fn sub(self, rhs: Complex<T>) -> Complex<T> {
-        Complex::new(self.real - rhs.real, self.imag + rhs.imag)
-    }
-}
-
-/// Operator overloading: -Complex<T>
-impl<T: Float> Neg for Complex<T> {
-    type Output = Complex<T>;
-
-    fn neg(self) -> Complex<T> {
-        Complex::new(-self.real, -self.imag)
-    }
-}
-
-/// Operator overloading: T * Complex<T>
-impl<T: Float> Mul<T> for Complex<T> {
-    type Output = Complex<T>;
-
-    fn mul(self, rhs: T) -> Complex<T> {
-        Complex::new(self.real * rhs, self.imag * rhs)
-    }
-}
-
-/// Operator overloading: Complex<f32> * f32
-impl Mul<Complex<f32>> for f32 {
-    type Output = Complex<f32>;
-
-    fn mul(self, rhs: Complex<f32>) -> Complex<f32> {
-        Complex::new(rhs.real * self, rhs.imag * self)
-    }
-}
-
-/// Operator overloading: Complex<f64> * f64
-impl Mul<Complex<f64>> for f64 {
-    type Output = Complex<f64>;
-
-    fn mul(self, rhs: Complex<f64>) -> Complex<f64> {
-        Complex::new(rhs.real * self, rhs.imag * self)
-    }
-}
-
-/// Operator overloading: Complex<T> * Complex<T>
-impl<T: Float> Mul<Complex<T>> for Complex<T> {
-    type Output = Complex<T>;
-
-    fn mul(self, rhs: Complex<T>) -> Complex<T> {
-        Complex::new(
-            self.real * rhs.real - self.imag * rhs.imag,
-            self.real * rhs.imag + self.imag * rhs.real,
-        )
-    }
-}
-
-/// Operator overloading: Complex<T> / T
-impl<T: Float> Div<T> for Complex<T> {
-    type Output = Complex<T>;
-
-    fn div(self, rhs: T) -> Complex<T> {
-        Complex::new(self.real / rhs, self.imag / rhs)
-    }
-}
-
-/// Operator overloading: f32 / Complex<f32>
-impl Div<Complex<f32>> for f32 {
-    type Output = Complex<f32>;
-
-    fn div(self, rhs: Complex<f32>) -> Complex<f32> {
-        Complex::conj(rhs) / Complex::square_abs(rhs) * self
-    }
-}
-
-/// Operator overloading: f64 / Complex<f64>
-impl Div<Complex<f64>> for f64 {
-    type Output = Complex<f64>;
-
-    fn div(self, rhs: Complex<f64>) -> Complex<f64> {
-        Complex::conj(rhs) / Complex::square_abs(rhs) * self
-    }
-}
-
-/// Operator overloading: Complex<T> / Complex<T>
-impl<T: Float> Div<Complex<T>> for Complex<T> {
-    type Output = Complex<T>;
-
-    fn div(self, rhs: Complex<T>) -> Complex<T> {
-        let rhsinv = rhs.inv();
-        Complex::new(
-            self.real * rhsinv.real - self.imag * rhsinv.imag,
-            self.real * rhsinv.imag + self.imag * rhsinv.real,
-        )
-    }
-}
+mod overloading;
 
 #[cfg(test)]
 mod tests;
