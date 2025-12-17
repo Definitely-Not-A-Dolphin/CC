@@ -1,360 +1,319 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
+/// CCMath: a crate for doing math with complex numbers
+use num_traits::Float;
+use std::fmt::{self, Debug, Display};
 
+/// Struct representing a complex number
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct Complex {
-    real: f64,
-    imag: f64,
+pub struct Complex<T: Float> {
+    real: T,
+    imag: T,
 }
 
-fn expimag(exponent: f64) -> Complex {
-    Complex::new(f64::cos(exponent), f64::sin(exponent))
+/// Alias for [`Complex`]
+pub type CC<T> = Complex<T>;
+// Personal tip: use this alias when code is getting a little hard to read, it cleans things up!
+
+trait Numbers: Float {
+    fn two() -> Self;
+    fn ten() -> Self;
+    fn half() -> Self;
 }
 
-impl Complex {
+impl<T: Float> Numbers for T {
+    fn two() -> T {
+        T::one() + T::one()
+    }
+    fn ten() -> T {
+        T::two() * (T::two() * T::two() + T::one())
+    }
+    fn half() -> T {
+        T::one() / T::two()
+    }
+}
+
+impl<T: Float> Complex<T> {
     /// Creates a new [`Complex`].
-    pub fn new(real: f64, imag: f64) -> Complex {
-        Complex {
-            real: real,
-            imag: imag,
-        }
+    pub fn new(real: T, imag: T) -> Self {
+        Self { real, imag }
+    }
+
+    /// Returns the imaginary number i
+    pub fn i() -> Self {
+        Self::new(T::zero(), T::one())
+    }
+
+    // Returns two i
+    fn two_i() -> Self {
+        Self::new(T::zero(), T::two())
     }
 
     /// Returns the real part of this [`Complex`].
-    pub fn real(self) -> f64 {
+    pub fn real(self) -> T {
         self.real
     }
 
     /// Returns the imaginary part of this [`Complex`].
-    pub fn imag(self) -> f64 {
+    pub fn imag(self) -> T {
         self.imag
     }
 
     /// Returns the conjugate of this [`Complex`].
-    pub fn conj(self) -> Complex {
-        Complex::new(self.real, -self.imag)
+    pub fn conj(self) -> Self {
+        Self::new(self.real, -self.imag)
     }
 
     /// Returns the square of the absolute value of this [`Complex`].
-    pub fn square_abs(self) -> f64 {
+    pub fn square_abs(self) -> T {
         self.real.powi(2) + self.imag.powi(2)
     }
 
     /// Returns the absolute value of this [`Complex`].
-    pub fn abs(self) -> f64 {
-        Complex::square_abs(self).sqrt()
+    pub fn abs(self) -> T {
+        Self::square_abs(self).sqrt()
     }
 
-    /// Returns the arg on the interval [0, 2PI) of this [`Complex`].
-    pub fn arg(self) -> f64 {
-        if self == Complex::new(0f64, 0f64) {
-            return 0f64;
-        };
-        self.imag.signum() * f64::acos(self.real / Complex::abs(self))
+    /// Returns the arg on the interval (-PI, PI] of this [`Complex`].
+    pub fn arg(self) -> T {
+        if self == Self::new(T::zero(), T::zero()) {
+            T::zero()
+        } else {
+            self.imag.signum() * T::acos(self.real / Self::abs(self))
+        }
     }
 
     /// Returns the square root of this [`Complex`].
-    pub fn sqrt(self) -> Complex {
-        let root_real = ((self.real + self.abs()) / 2f64).sqrt();
-        let root_imag = ((-self.real + self.abs()) / 2f64).sqrt();
-        return Complex::new(root_real, self.imag.signum() * root_imag);
+    pub fn sqrt(self) -> Self {
+        Self::new(
+            ((self.real + self.abs()) / T::two()).sqrt(),
+            self.imag.signum() * ((-self.real + self.abs()) / T::two()).sqrt(),
+        )
     }
 
     /// Returns the multiplicative inverse of this [`Complex`].
-    pub fn inv(self) -> Complex {
-        Complex::conj(self) / Complex::square_abs(self)
+    pub fn inv(self) -> Self {
+        Self::conj(self) / Self::square_abs(self)
     }
 
     /// Returns this [`Complex`] raised to a power using repeated multiplication.
-    pub fn powi(self, exponent: i64) -> Complex {
+    pub fn powi(self, exponent: i64) -> Self {
         match exponent {
-            0 => Complex::new(1f64, 0f64),
+            0 => Self::new(T::one(), T::zero()),
             1 => self,
             -1 => self.inv(),
             _ => {
                 let mut result = self;
                 for _ in 2..=exponent.abs() {
-                    result = result * self;
+                    result *= self;
                 }
-                if exponent < 0 {
-                    return result.inv();
-                }
-                return result;
+                if exponent < 0 { result.inv() } else { result }
             }
         }
     }
+    // Todo: Implement exponentiating by squaring
 
     /// Returns this [`Complex`] raised to a power using De Moivre's formula.
-    pub fn powf(self, exponent: f64) -> Complex {
-        Complex::abs(self).powf(exponent)
-            * Complex::new(
-                f64::cos(exponent * self.arg()),
-                f64::sin(exponent * self.arg()),
-            )
+    pub fn powf(self, exponent: T) -> Self {
+        let arg_exponent = self.arg() * exponent;
+        Self::new(T::cos(arg_exponent), T::sin(arg_exponent)) * T::powf(Self::abs(self), exponent)
     }
 
     /// Returns this [`Complex`] raised to a complex power.
-    pub fn powc(self, exponent: Complex) -> Complex {
-        Complex::powf(self, exponent.real)
-            * Complex::exp(self.ln() * Complex::new(0f64, exponent.imag))
+    pub fn powc(self, exponent: Self) -> Self {
+        Self::powf(self, exponent.real) * Self::exp(self.ln() * Self::new(T::zero(), exponent.imag))
     }
 
     /// Returns e raised to the power of this [`Complex`].
-    pub fn exp(self) -> Complex {
-        f64::exp(self.real) * expimag(self.imag)
+    pub fn exp(self) -> Self {
+        Self::new(T::cos(self.imag), T::sin(self.imag)) * T::exp(self.real)
     }
 
     /// Returns base raised to the power of this [`Complex`].
-    pub fn expf(self, base: f64) -> Complex {
-        if base == 0f64 {
-            return Complex::new(0f64, 0f64);
-        };
-        Complex::exp(base.ln() * self)
+    pub fn expf(self, base: T) -> Self {
+        if base == T::zero() {
+            Self::new(T::zero(), T::zero())
+        } else {
+            Self::exp(self * T::ln(base))
+        }
     }
 
     /// Returns the natural logarithm of the absolute value of this [`Complex`].
-    pub fn ln_abs(self) -> f64 {
-        Complex::square_abs(self).ln() / 2f64
+    pub fn ln_abs(self) -> T {
+        T::ln(Self::square_abs(self)) / T::two()
     }
 
     /// Returns the natural logarithm of this [`Complex`].
-    pub fn ln(self) -> Complex {
-        Complex::new(Complex::ln_abs(self), Complex::arg(self))
+    pub fn ln(self) -> Self {
+        Self::new(Self::ln_abs(self), Self::arg(self))
     }
 
     /// Returns the logarithm base 10 of this [`Complex`].
-    pub fn log(self) -> Complex {
-        Complex::ln(self) / f64::ln(10f64)
+    pub fn log(self) -> Self {
+        Self::ln(self) / T::ln(T::ten())
     }
 
     /// Returns the logarithm base n of this [`Complex`].
-    pub fn logn(self, base: f64) -> Complex {
-        Complex::ln(self) / f64::ln(base)
+    pub fn logn(self, base: T) -> Self {
+        Self::ln(self) / T::ln(base)
     }
 }
 
-impl Add<f64> for Complex {
-    type Output = Complex;
-
-    fn add(self, rhs: f64) -> Complex {
-        Complex::new(self.real + rhs, self.imag)
-    }
-}
-
-impl Add<Complex> for f64 {
-    type Output = Complex;
-
-    fn add(self, rhs: Complex) -> Complex {
-        Complex::new(rhs.real + self, rhs.imag)
-    }
-}
-
-impl Add<Complex> for Complex {
-    type Output = Complex;
-
-    fn add(self, rhs: Complex) -> Complex {
-        Complex::new(self.real + rhs.real, self.imag + rhs.imag)
-    }
-}
-
-impl Sub<f64> for Complex {
-    type Output = Complex;
-
-    fn sub(self, rhs: f64) -> Complex {
-        Complex::new(self.real - rhs, self.imag)
-    }
-}
-
-impl Sub<Complex> for f64 {
-    type Output = Complex;
-
-    fn sub(self, rhs: Complex) -> Complex {
-        Complex::new(self - rhs.real, -rhs.imag)
-    }
-}
-
-impl Sub<Complex> for Complex {
-    type Output = Complex;
-
-    fn sub(self, rhs: Complex) -> Complex {
-        Complex::new(self.real - rhs.real, self.imag + rhs.imag)
-    }
-}
-
-impl Neg for Complex {
-    type Output = Complex;
-
-    fn neg(self) -> Complex {
-        Complex::new(-self.real, -self.imag)
-    }
-}
-
-impl Mul<f64> for Complex {
-    type Output = Complex;
-
-    fn mul(self, rhs: f64) -> Complex {
-        Complex::new(self.real * rhs, self.imag * rhs)
-    }
-}
-
-impl Mul<Complex> for f64 {
-    type Output = Complex;
-
-    fn mul(self, rhs: Complex) -> Complex {
-        Complex::new(rhs.real * self, rhs.imag * self)
-    }
-}
-
-impl Mul<Complex> for Complex {
-    type Output = Complex;
-
-    fn mul(self, rhs: Complex) -> Complex {
-        Complex::new(
-            self.real * rhs.real - self.imag * rhs.imag,
-            self.real * rhs.imag + self.imag * rhs.real,
+// Trig
+impl<T: Float + Debug> Complex<T> {
+    /// Returns the sine of this [`Complex`].
+    pub fn sin(self) -> Self {
+        Self::new(
+            T::sin(self.real) * T::cosh(self.imag),
+            T::cos(self.real) * T::sinh(self.imag),
         )
     }
-}
 
-impl Div<f64> for Complex {
-    type Output = Complex;
+    /// Returns the cosine of this [`Complex`].
+    pub fn cos(self) -> Self {
+        Self::new(
+            T::cos(self.real) * T::cosh(self.imag),
+            -T::sin(self.real) * T::sinh(self.imag),
+        )
+    }
 
-    fn div(self, rhs: f64) -> Complex {
-        Complex::new(self.real / rhs, self.imag / rhs)
+    /// Returns the tangent of this [`Complex`].
+    pub fn tan(self) -> Self {
+        Self::sin(self) / Self::cos(self)
+    }
+
+    /// Returns the cotangent of this [`Complex`].
+    pub fn cot(self) -> Self {
+        Self::cos(self) / Self::sin(self)
+    }
+
+    /// Returns the secant of this [`Complex`].
+    pub fn sec(self) -> Self {
+        Self::cos(self).inv()
+    }
+
+    /// Returns the cosecant of this [`Complex`].
+    pub fn csc(self) -> Self {
+        Self::sin(self).inv()
+    }
+
+    // Inverse trig
+
+    /// Returns the arcsine of this [`Complex`].
+    pub fn arcsin(self) -> Self {
+        -Self::i() * Self::ln(Self::sqrt(-self.powi(2) + T::one()) + Self::i() * self)
+    }
+
+    /// Returns the arccosine of this [`Complex`].
+    pub fn arccos(self) -> Self {
+        Self::i() * Self::ln(Self::sqrt(-self.powi(2) + T::one()) / Self::i() + self)
+    }
+
+    /// Returns the arctangent of this [`Complex`].
+    pub fn arctan(self) -> Self {
+        Self::two_i().inv()
+            * Self::ln((Self::i() * self + T::one()) / (-Self::i() * self + T::one()))
+    }
+
+    /// Returns the arccotangent of this [`Complex`].
+    pub fn arccot(self) -> Self {
+        Self::arctan(Self::inv(self))
+    }
+
+    /// Returns the arcsecant of this [`Complex`].
+    pub fn arcsec(self) -> Self {
+        Self::arccos(Self::inv(self))
+    }
+
+    // Returns the arccosecant of this [`Complex`].
+    pub fn arccsc(self) -> Self {
+        Self::arcsin(Self::inv(self))
+    }
+
+    // Hyperbolic trig
+
+    /// Returns the hyperbolic sine of this [`Complex`].
+    pub fn sinh(self) -> Self {
+        Self::new(
+            T::sinh(self.real) * T::cos(self.imag),
+            T::cosh(self.real) * T::sin(self.imag),
+        )
+    }
+
+    /// Returns the hyperbolic cosine of this [`Complex`].
+    pub fn cosh(self) -> Self {
+        Self::new(
+            T::cosh(self.real) * T::cos(self.imag),
+            T::sinh(self.real) * T::sin(self.imag),
+        )
+    }
+
+    /// Returns the hyperbolic tangent of this [`Complex`].
+    pub fn tanh(self) -> Self {
+        Self::sinh(self) / Self::cosh(self)
+    }
+
+    /// Returns the hyperbolic cotangent of this [`Complex`].
+    pub fn coth(self) -> Self {
+        Self::cosh(self) / Self::sinh(self)
+    }
+
+    /// Returns the hyperbolic secant of this [`Complex`].
+    pub fn sech(self) -> Self {
+        Self::cosh(self).inv()
+    }
+
+    /// Returns the hyperbolic cosecant of this [`Complex`].
+    pub fn csch(self) -> Self {
+        Self::sinh(self).inv()
+    }
+
+    // Inverse hyperbolic trig
+
+    /// Returns the hyperbolic arcsine of this [`Complex`].
+    pub fn arcsinh(self) -> Self {
+        Self::ln(Self::sqrt(self.powi(2) + T::one()) + self)
+    }
+
+    /// Returns the hyperbolic arccosine of this [`Complex`].
+    pub fn arccosh(self) -> Self {
+        Self::ln(Self::sqrt(self.powi(2) - T::one()) + self)
+    }
+
+    /// Returns the hyperbolic arctangent of this [`Complex`].
+    pub fn arctanh(self) -> Self {
+        Self::ln((self + T::one()) / (-self + T::one())) * T::half()
+    }
+
+    /// Returns the hyperbolic arccotangent of this [`Complex`].
+    pub fn arccoth(self) -> Self {
+        Self::arctanh(Self::inv(self))
+    }
+
+    /// Returns the hyperbolic arcsecant of this [`Complex`].
+    pub fn arcsech(self) -> Self {
+        Self::arccosh(Self::inv(self))
+    }
+
+    /// Returns the hyperbolic arccosecant of this [`Complex`].
+    pub fn arccsch(self) -> Self {
+        Self::arcsinh(Self::inv(self))
     }
 }
 
-impl Div<Complex> for f64 {
-    type Output = Complex;
-
-    fn div(self, rhs: Complex) -> Complex {
-        self * rhs.inv()
+// Implements display
+impl<T: Float + Display> fmt::Display for Complex<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // The `f` value implements the `Write` trait, which is what the
+        // write! macro is expecting. Note that this formatting ignores the
+        // various flags provided to format strings.
+        if self.imag >= T::zero() {
+            write!(f, "{} + {}i", self.real, self.imag)
+        } else {
+            write!(f, "{} - {}i", self.real, self.imag)
+        }
     }
 }
 
-impl Div<Complex> for Complex {
-    type Output = Complex;
-
-    fn div(self, rhs: Complex) -> Complex {
-        self * rhs.inv()
-    }
-}
+mod overloading;
 
 #[cfg(test)]
-mod tests {
-    use std::f64;
-
-    use super::*;
-
-    #[test]
-    fn complex_unary_operators() {
-        let z1 = Complex::new(3f64, 4f64);
-        let z2 = Complex::new(5.2, -0.9);
-
-        // real and imag
-        assert_eq!(z1.real(), 3f64);
-        assert_eq!(z1.imag(), 4f64);
-        assert_eq!(z2.real(), 5.2);
-        assert_eq!(z2.imag(), -0.9);
-
-        // abs
-        assert_eq!(z1.abs(), 5f64);
-        assert_eq!(z2.abs(), f64::sqrt(27.85));
-
-        // square abs
-        assert_eq!(z1.square_abs(), 25f64);
-        assert_eq!(z2.square_abs(), 27.85);
-
-        // arg
-        assert_eq!(z1.arg(), 0.9272952180016123);
-        assert_eq!(z2.arg(), -0.1713791263895069);
-
-        // inv
-        assert_eq!(z1.inv(), Complex::new(0.12, -0.16));
-        assert_eq!(
-            z2.inv(),
-            Complex::new(0.1867145421903052, 0.03231597845601436)
-        );
-
-        // exp
-        assert_eq!(
-            Complex::new(0f64, f64::consts::PI).exp(),
-            Complex::new(-1f64, 1.2246467991473532e-16)
-        );
-        assert_eq!(
-            z1.exp(),
-            Complex::new(-13.128783081462158, -15.200784463067954)
-        );
-
-        // ln
-        assert_eq!(
-            Complex::new(0f64, 0f64).ln(),
-            Complex::new(f64::NEG_INFINITY, 0f64)
-        );
-        assert_eq!(
-            Complex::new(-1f64, 0f64).ln(),
-            Complex::new(0f64, f64::consts::PI)
-        );
-    }
-
-    #[test]
-    fn simple_binary_operators() {
-        let z1 = Complex::new(3f64, 4f64);
-        let z2 = Complex::new(-2.5, 6.23);
-
-        // add
-        assert_eq!(z1 + 5f64, Complex::new(8f64, 4f64));
-        assert_eq!(5f64 + z1, Complex::new(8f64, 4f64));
-        assert_eq!(z1 + z2, Complex::new(0.5, 10.23));
-
-        // subtract
-        assert_eq!(z1 - 5f64, Complex::new(-2f64, 4f64));
-        assert_eq!(5f64 - z1, Complex::new(2f64, -4f64));
-        assert_eq!(z1 - z2, Complex::new(5.5, 10.23));
-
-        // multiply
-        assert_eq!(z1 * -0.5, Complex::new(-1.5, -2f64));
-        assert_eq!(1.8 * z2, Complex::new(-4.5, 11.214));
-        assert_eq!(z1 * z2, Complex::new(-32.42, 8.690000000000001));
-
-        // dividing
-        assert_eq!(z1 / -0.5, Complex::new(-6f64, -8f64));
-        assert_eq!(
-            1.8 / z2,
-            Complex::new(-0.0998604173277796, -0.24885215998082677)
-        );
-        assert_eq!(
-            z1 / z2,
-            Complex::new(0.38657077107776017, -0.6366656384742215)
-        );
-    }
-
-    #[test]
-    fn complex_binary_operators() {
-        let z1 = Complex::new(3f64, 4f64);
-        let z2 = Complex::new(5.2, -0.9);
-
-        // powi
-        assert_eq!(z1.powi(6), Complex::new(11753f64, -10296f64));
-        assert_eq!(
-            z2.powi(-2),
-            Complex::new(0.03381799780176568, 0.012067726245692974)
-        );
-
-        // powf
-        assert_eq!(z1.powf(3f64), Complex::new(-117f64, 43.99999999999998));
-        assert_eq!(
-            z2.powf(-2.5),
-            Complex::new(0.014217542838549325, 0.00649377309897787)
-        );
-
-        // powc
-        assert_eq!(
-            z1.powc(z2),
-            Complex::new(-9667.467998399987, -2282.430226186542)
-        );
-        assert_eq!(
-            z2.powc(z1),
-            Complex::new(288.7067987011787, -41.7623644411436)
-        );
-    }
-}
+mod tests;

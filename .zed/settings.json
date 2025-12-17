@@ -1,0 +1,13 @@
+{
+  // We don't use AI for this, ever
+  "disable_ai": true,
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "check": {
+          "command": "clippy"
+        }
+      }
+    }
+  }
+}
