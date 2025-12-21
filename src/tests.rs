@@ -141,7 +141,7 @@ fn complex_trig() {
     // cot
     assert_eq!(
         Complex::cot(z1),
-        Complex::new(-0.00018758773798366324, -1.0006443924715591)
+        Complex::new(-0.00018758773798366576, -1.0006443924715591)
     );
 
     // sec
@@ -176,13 +176,13 @@ fn complex_inverse_trig() {
     // arctan
     assert_eq!(
         Complex::arctan(z1),
-        Complex::new(1.4483069952314647, 0.15899719167999923)
+        Complex::new(1.4483069952314649, 0.1589971916799988)
     );
 
     // arccot
     assert_eq!(
         Complex::arccot(z1),
-        Complex::new(0.12248933156343211, -0.15899719167999918)
+        Complex::new(0.12248933156343111, -0.1589971916799991)
     );
 
     // arcsec
@@ -223,7 +223,7 @@ fn complex_hyperbolic_trig() {
     // coth
     assert_eq!(
         Complex::coth(z1),
-        Complex::new(0.9992669278059017, -0.004901182394304371)
+        Complex::new(0.9992669278059015, -0.004901182394304366)
     );
 
     // sech

@@ -1,6 +1,6 @@
 /// CCMath: a crate for doing math with complex numbers
 use num_traits::Float;
-use std::fmt::{self, Debug, Display};
+use std::fmt::{Debug, Display, Formatter, Result};
 
 /// Struct representing a complex number
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -15,19 +15,11 @@ pub type CC<T> = Complex<T>;
 
 trait Numbers: Float {
     fn two() -> Self;
-    fn ten() -> Self;
-    fn half() -> Self;
 }
 
 impl<T: Float> Numbers for T {
     fn two() -> T {
         T::one() + T::one()
-    }
-    fn ten() -> T {
-        T::two() * (T::two() * T::two() + T::one())
-    }
-    fn half() -> T {
-        T::one() / T::two()
     }
 }
 
@@ -40,11 +32,6 @@ impl<T: Float> Complex<T> {
     /// Returns the imaginary number i
     pub fn i() -> Self {
         Self::new(T::zero(), T::one())
-    }
-
-    // Returns two i
-    fn two_i() -> Self {
-        Self::i() * T::two()
     }
 
     /// Returns the real part of this [`Complex`].
@@ -69,12 +56,12 @@ impl<T: Float> Complex<T> {
 
     /// Returns the absolute value of this [`Complex`].
     pub fn abs(self) -> T {
-        Self::square_abs(self).sqrt()
+        T::sqrt(Self::square_abs(self))
     }
 
     /// Returns the arg on the interval (-PI, PI] of this [`Complex`].
     pub fn arg(self) -> T {
-        if self == Self::new(T::zero(), T::zero()) {
+        if Self::abs(self) == T::zero() {
             T::zero()
         } else {
             self.imag.signum() * T::acos(self.real / Self::abs(self))
@@ -84,8 +71,8 @@ impl<T: Float> Complex<T> {
     /// Returns the square root of this [`Complex`].
     pub fn sqrt(self) -> Self {
         Self::new(
-            T::sqrt((self.real + self.abs()) / T::two()),
-            self.imag.signum() * T::sqrt((-self.real + self.abs()) / T::two()),
+            T::sqrt((self.real + Self::abs(self)) / T::two()),
+            self.imag.signum() * T::sqrt((-self.real + Self::abs(self)) / T::two()),
         )
     }
 
@@ -99,7 +86,7 @@ impl<T: Float> Complex<T> {
         match exponent {
             0 => Self::new(T::one(), T::zero()),
             1 => self,
-            -1 => self.inv(),
+            -1 => Self::inv(self),
             _ => {
                 if exponent < 0 {
                     Self::powi(self, -exponent).inv()
@@ -111,7 +98,6 @@ impl<T: Float> Complex<T> {
             }
         }
     }
-    // Todo: Implement exponentiating by squaring
 
     /// Returns this [`Complex`] raised to a power using De Moivre's formula.
     pub fn powf(self, exponent: T) -> Self {
@@ -121,7 +107,7 @@ impl<T: Float> Complex<T> {
 
     /// Returns this [`Complex`] raised to a complex power.
     pub fn powc(self, exponent: Self) -> Self {
-        Self::powf(self, exponent.real) * Self::exp(self.ln() * Self::new(T::zero(), exponent.imag))
+        Self::powf(self, exponent.real) * Self::exp(Self::ln(self) * Self::i() * exponent.imag)
     }
 
     /// Returns e raised to the power of this [`Complex`].
@@ -131,11 +117,7 @@ impl<T: Float> Complex<T> {
 
     /// Returns base raised to the power of this [`Complex`].
     pub fn expf(self, base: T) -> Self {
-        if base == T::zero() {
-            Self::new(T::zero(), T::zero())
-        } else {
-            Self::exp(self * T::ln(base))
-        }
+        Self::exp(self * T::ln(base))
     }
 
     /// Returns the natural logarithm of the absolute value of this [`Complex`].
@@ -150,7 +132,8 @@ impl<T: Float> Complex<T> {
 
     /// Returns the logarithm base 10 of this [`Complex`].
     pub fn log(self) -> Self {
-        Self::ln(self) / T::ln(T::ten())
+        Self::ln(self) / T::ln(T::two() * (T::two() * T::two() + T::one()))
+        //                     This is equal to 10
     }
 
     /// Returns the logarithm base n of this [`Complex`].
@@ -184,17 +167,17 @@ impl<T: Float> Complex<T> {
 
     /// Returns the cotangent of this [`Complex`].
     pub fn cot(self) -> Self {
-        Self::cos(self) / Self::sin(self)
+        Self::inv(Self::tan(self))
     }
 
     /// Returns the secant of this [`Complex`].
     pub fn sec(self) -> Self {
-        Self::cos(self).inv()
+        Self::inv(Self::cos(self))
     }
 
     /// Returns the cosecant of this [`Complex`].
     pub fn csc(self) -> Self {
-        Self::sin(self).inv()
+        Self::inv(Self::sin(self))
     }
 
     // Inverse trig
@@ -211,8 +194,7 @@ impl<T: Float> Complex<T> {
 
     /// Returns the arctangent of this [`Complex`].
     pub fn arctan(self) -> Self {
-        Self::two_i().inv()
-            * Self::ln((Self::i() * self + T::one()) / (-Self::i() * self + T::one()))
+        Self::arcsin(self / Self::sqrt(self.powi(2) + T::one()))
     }
 
     /// Returns the arccotangent of this [`Complex`].
@@ -255,17 +237,17 @@ impl<T: Float> Complex<T> {
 
     /// Returns the hyperbolic cotangent of this [`Complex`].
     pub fn coth(self) -> Self {
-        Self::cosh(self) / Self::sinh(self)
+        Self::inv(Self::tanh(self))
     }
 
     /// Returns the hyperbolic secant of this [`Complex`].
     pub fn sech(self) -> Self {
-        Self::cosh(self).inv()
+        Self::inv(Self::cosh(self))
     }
 
     /// Returns the hyperbolic cosecant of this [`Complex`].
     pub fn csch(self) -> Self {
-        Self::sinh(self).inv()
+        Self::inv(Self::sinh(self))
     }
 
     // Inverse hyperbolic trig
@@ -282,7 +264,7 @@ impl<T: Float> Complex<T> {
 
     /// Returns the hyperbolic arctangent of this [`Complex`].
     pub fn arctanh(self) -> Self {
-        Self::ln((self + T::one()) / (-self + T::one())) * T::half()
+        Self::ln((self + T::one()) / (-self + T::one())) * T::powi(T::two(), -1)
     }
 
     /// Returns the hyperbolic arccotangent of this [`Complex`].
@@ -302,8 +284,8 @@ impl<T: Float> Complex<T> {
 }
 
 // Implements display
-impl<T: Float + Display> fmt::Display for Complex<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl<T: Float + Display> Display for Complex<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if self.imag >= T::zero() {
             write!(f, "{} + {}i", self.real, self.imag)
         } else {
