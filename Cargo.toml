@@ -1,10 +1,10 @@
 [package]
 name = "ccmath"
 description = "A simple library for doing math with complex numbers"
-version = "0.2.2"
+version = "1.0.0"
 edition = "2024"
 license = "MIT"
-keywords = ["mathematics", "complex", "complex numbers"]
+keywords = ["mathematics", "complex"]
 repository = "https://github.com/Definitely-Not-A-Dolphin/CCMath"
 readme = "README.md"
 authors = ["Derek Verduijn"]
