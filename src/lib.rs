@@ -18,6 +18,7 @@ trait Numbers: Float {
 }
 
 impl<T: Float> Numbers for T {
+    /// Returns the number two
     fn two() -> T {
         T::one() + T::one()
     }
@@ -142,7 +143,7 @@ impl<T: Float> Complex<T> {
             -1 => Self::inv(self),
             _ => {
                 if exponent < 0 {
-                    Self::powi(self, -exponent).inv()
+                    Self::inv(Self::powi(self, -exponent))
                 } else if exponent.rem_euclid(2) == 0 {
                     Self::powi(self * self, exponent / 2)
                 } else {
