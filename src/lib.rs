@@ -348,6 +348,27 @@ impl<T: Float + Display> Display for Complex<T> {
     }
 }
 
+/// Struct representing a complex number
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct ComplexPolar<T: Float> {
+    radius: T,
+    angle: T,
+}
+
+impl<T: Float> ComplexPolar<T> {
+    pub fn new(radius: T, angle: T) -> Self {
+        Self { radius, angle }
+    }
+
+    pub fn abs(self) -> T {
+        self.radius
+    }
+
+    pub fn arg(self) -> T {
+        self.angle
+    }
+}
+
 mod overloading;
 
 #[cfg(test)]
