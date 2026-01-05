@@ -16,7 +16,7 @@ impl<T: Float> Add<T> for Complex<T> {
 /// Complex<T> += T
 impl<T: Float> AddAssign<T> for Complex<T> {
     fn add_assign(&mut self, rhs: T) {
-        *self = Complex::new(self.real + rhs, self.imag);
+        *self = *self + rhs;
     }
 }
 
@@ -50,7 +50,7 @@ impl<T: Float> Add<Complex<T>> for Complex<T> {
 /// Complex<T> += Complex<T>
 impl<T: Float> AddAssign<Complex<T>> for Complex<T> {
     fn add_assign(&mut self, rhs: Complex<T>) {
-        *self = Complex::new(self.real + rhs.real, self.imag + rhs.imag);
+        *self = *self + rhs;
     }
 }
 
@@ -68,7 +68,7 @@ impl<T: Float> Sub<T> for Complex<T> {
 /// Complex<T> -= T
 impl<T: Float> SubAssign<T> for Complex<T> {
     fn sub_assign(&mut self, rhs: T) {
-        *self = Complex::new(self.real - rhs, self.imag);
+        *self = *self - rhs
     }
 }
 
@@ -102,7 +102,7 @@ impl<T: Float> Sub<Complex<T>> for Complex<T> {
 /// Complex<T> -= Complex<T>
 impl<T: Float> SubAssign<Complex<T>> for Complex<T> {
     fn sub_assign(&mut self, rhs: Complex<T>) {
-        *self = Complex::new(self.real - rhs.real, self.imag + rhs.imag);
+        *self = *self - rhs;
     }
 }
 
@@ -131,11 +131,11 @@ impl<T: Float> Mul<T> for Complex<T> {
 /// Complex<T> *= T
 impl<T: Float> MulAssign<T> for Complex<T> {
     fn mul_assign(&mut self, rhs: T) {
-        *self = Complex::new(self.real * rhs, self.imag * rhs);
+        *self = *self * rhs;
     }
 }
 
-/// Complex<f32> * f32
+/// f32 * Complex<f32>
 impl Mul<Complex<f32>> for f32 {
     type Output = Complex<f32>;
 
@@ -144,7 +144,7 @@ impl Mul<Complex<f32>> for f32 {
     }
 }
 
-/// Complex<f64> * f64
+/// f64 * Complex<f64>
 impl Mul<Complex<f64>> for f64 {
     type Output = Complex<f64>;
 
@@ -168,10 +168,7 @@ impl<T: Float> Mul<Complex<T>> for Complex<T> {
 /// Complex<T> *= Complex<T>
 impl<T: Float> MulAssign<Complex<T>> for Complex<T> {
     fn mul_assign(&mut self, rhs: Complex<T>) {
-        *self = Complex::new(
-            self.real * rhs.real - self.imag * rhs.imag,
-            self.real * rhs.imag + self.imag * rhs.real,
-        );
+        *self = *self * rhs
     }
 }
 
@@ -189,7 +186,7 @@ impl<T: Float> Div<T> for Complex<T> {
 /// Complex<T> /= T
 impl<T: Float> DivAssign<T> for Complex<T> {
     fn div_assign(&mut self, rhs: T) {
-        *self = Complex::new(self.real / rhs, self.imag / rhs);
+        *self = *self / rhs;
     }
 }
 
@@ -227,10 +224,6 @@ impl<T: Float> Div<Complex<T>> for Complex<T> {
 /// Complex<T> /= Complex<T>
 impl<T: Float> DivAssign<Complex<T>> for Complex<T> {
     fn div_assign(&mut self, rhs: Complex<T>) {
-        let rhsinv = rhs.inv();
-        *self = Complex::new(
-            self.real * rhsinv.real - self.imag * rhsinv.imag,
-            self.real * rhsinv.imag + self.imag * rhsinv.real,
-        );
+        *self = *self / rhs;
     }
 }

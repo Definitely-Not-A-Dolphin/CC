@@ -1,7 +1,6 @@
 #![allow(clippy::excessive_precision)]
-use std::f64;
-
 use super::*;
+use std::f64;
 
 #[test]
 fn unary_operators() {

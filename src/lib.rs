@@ -122,6 +122,11 @@ impl<T: Float> Complex<T> {
         }
     }
 
+    /// Returns this [`Complex`] in polar form as a [`ComplexPolar`]
+    pub fn polarize(self) -> ComplexPolar<T> {
+        ComplexPolar::new(self.abs(), self.arg())
+    }
+
     /// Returns the square root of this [`Complex`].
     pub fn sqrt(self) -> Self {
         Self::new(
@@ -356,20 +361,61 @@ pub struct ComplexPolar<T: Float> {
 }
 
 impl<T: Float> ComplexPolar<T> {
+    /// Creates a new [`ComplexPolar`].
     pub fn new(radius: T, angle: T) -> Self {
         Self { radius, angle }
     }
 
+    ///// Returns the imaginary number i
+    // pub fn i() -> Self {
+    //   Self::new(T::one(), T::PI())
+    // }
+
+    /// Returns the absolute value of this [`ComplexPolar`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ccmath::ComplexPolar;
+    ///
+    /// let z1 = ComplexPolar::new(4.0, f32::PI);
+    /// let z2 = ComplexPolar::new(5.0, f32::PI / 2.0);
+    ///
+    /// assert_eq!(ComplexPolar::abs(z1), 4.0);
+    /// assert_eq!(ComplexPolar::abs(z2), 5.0);
+    /// ```
     pub fn abs(self) -> T {
         self.radius
     }
 
+    /// Returns the argument of this [`ComplexPolar`].
     pub fn arg(self) -> T {
         self.angle
+    }
+
+    /// Returns this [`ComplexPolar`] in standard form as a [`Complex`]
+    pub fn unpolarize(self) -> Complex<T> {
+        Complex::exp(Complex::i() * self.angle) * self.radius
+    }
+
+    /// Returns the square root of this [`ComplexPolar`].
+    pub fn sqrt(self) -> Self {
+        Self::new(T::sqrt(self.radius), self.angle / T::two())
+    }
+
+    /// Returns the multiplicative inverse of this [`ComplexPolar`].
+    pub fn inv(self) -> Self {
+        Self::new(T::one() / self.radius, -self.angle)
+    }
+
+    /// Returns this [`ComplexPolar`] raised to float.
+    pub fn powf(self, exponent: T) -> Self {
+        Self::new(self.radius.powf(exponent), self.angle * exponent)
     }
 }
 
 mod overloading;
+mod polaroverloading;
 
 #[cfg(test)]
 mod tests;

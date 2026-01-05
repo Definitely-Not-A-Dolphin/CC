@@ -2,7 +2,13 @@
 
 #let inv(n) = math.frac([1], n);
 
-= Multiply
+#outline()
+
+#pagebreak()
+
+= Regular
+
+== Multiply
 
 $
   (a+b i)(c + d i)=\
@@ -11,7 +17,7 @@ $
   a c - b d + (a d + b c)i
 $
 
-= Divide
+== Division
 $
   frac(a + b i, c + d i)=\
   frac((a + b i)(c - d i), (c + d i)(c + d i))=\
@@ -19,7 +25,14 @@ $
   frac(a c + b d, c^2 + d^2) + frac(b c - a d, c^2 + d^2)i=\
 $
 
-= Square root
+=== Inverse
+$
+  inv(z) =\
+  frac(a - b i, |z|^2)=\
+  frac(a, |z|^2) - frac(b, |z|^2) i
+$
+
+== Square root
 If $b$ is positive:
 $
   sqrt(z)=sqrt(frac(a+sqrt(a^2+b^2), 2))+sqrt(frac(-a+sqrt(a^2+b^2), 2))i
@@ -30,14 +43,7 @@ $
   sqrt(z)=sqrt(frac(a+sqrt(a^2+b^2), 2))-sqrt(frac(-a+sqrt(a^2+b^2), 2))i
 $
 
-= Inverse
-$
-  inv(z) =\
-  frac(a - b i, |z|^2)=\
-  frac(a, |z|^2) - frac(b, |z|^2) i
-$
-
-= Natural Logarithm
+== Natural Logarithm
 $
   ln(z) =\
   ln(|z|e^(i theta))=\
@@ -45,7 +51,7 @@ $
   ln|z|+i theta
 $
 
-= Exponentiation
+== Exponentiation
 
 $
   z_1^(z_2)=\
@@ -54,7 +60,7 @@ $
   z_1^(c) e^(ln(z_1)d i)=\
 $
 
-= Trig
+== Trig
 
 $
   sin(z) & =sin(a)cosh(b) + cos(a)sinh(b)i \
@@ -65,7 +71,7 @@ $
   csc(z) & =inv(sin(z)) \
 $
 
-= Inverse Trig
+=== Inverse Trig
 
 $
     arcsin(z) & =-i ln(sqrt(1-z^2) + i z) \
@@ -76,7 +82,7 @@ $
   "arccsc"(z) & =arcsin(inv(z)) \
 $
 
-= Hyperbolic Trig
+=== Hyperbolic Trig
 
 $
   sinh(z) & =sinh(a)cos(b)+cosh(a)sin(b)i \
@@ -87,7 +93,7 @@ $
   csch(z) & =inv(sin(z)) \
 $
 
-= Inverse Hyperbolic Trig
+=== Inverse Hyperbolic Trig
 
 $
   "arcsinh"(z) & =ln(sqrt(z^2+1)+z) \
@@ -96,4 +102,36 @@ $
   "arccoth"(z) & ="arctanh"(inv(z))=1/2ln(frac(1-z, 1+z)) \
   "arcsech"(z) & ="arccosh"(inv(z)) \
   "arccsch"(z) & ="arcsinh"(inv(z)) \
+$
+
+#pagebreak()
+
+= Polar
+
+== Multiplication
+$
+  z_1 dot z_2=\
+  r_1 dot e^(i theta_1) dot r_2 dot e^(i theta_2)=\
+  r_1 dot r_2 dot e^(i(theta_1 + theta_2))\
+$
+
+== Division
+$
+  frac(z_1, z_2)=\
+  frac(r_1, r_2) dot frac(e^(i theta_1), e^(i theta_2))=\
+  frac(r_1, r_2) dot e^(i (theta_1 - theta_2))\
+$
+
+=== Division
+$
+  frac(1, z_1)=\
+  frac(1, r_1) dot frac(e^(i 0), e^(i theta_1))=\
+  frac(1, r_1) dot e^(-i theta_1)\
+$
+
+== Exponentiation
+$z in CC, a in RR$
+$
+  z^a=\
+  r^a dot e^(i theta a)
 $
