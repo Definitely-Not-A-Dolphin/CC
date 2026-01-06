@@ -16,6 +16,8 @@ pub type CC<T> = Complex<T>;
 trait Numbers: Float {
     fn num(n: u32) -> Self;
     fn pi() -> Self;
+    fn powc(self, exponent: Complex<Self>) -> Complex<Self>;
+    fn powcp(self, exponent: ComplexPolar<Self>) -> ComplexPolar<Self>;
 }
 
 impl<T: Float> Numbers for T {
@@ -32,6 +34,14 @@ impl<T: Float> Numbers for T {
         .fold(T::num(3), |pi, (k, item)| {
             pi + T::num(*item) / T::num(10).powi(k as i32 + 1)
         })
+    }
+    /// Returns base raised to the power of this [`Complex`].
+    fn powc(self, exponent: Complex<T>) -> Complex<T> {
+        Complex::exp(exponent * T::ln(self))
+    }
+    /// Returns base raised to the power of this [`ComplexPolar`].
+    fn powcp(self, exponent: ComplexPolar<T>) -> ComplexPolar<T> {
+        Complex::exp(exponent.unpolarize() * T::ln(self)).polarize()
     }
 }
 
@@ -180,14 +190,14 @@ impl<T: Float> Complex<T> {
         Self::powf(self, exponent.real) * Self::exp(Self::ln(self) * Self::i() * exponent.imag)
     }
 
+    /// Returns this [`Complex`] raised to a [`ComplexPolar`] power.
+    pub fn powcp(self, exponent: ComplexPolar<T>) -> Self {
+        Self::powc(self, exponent.unpolarize())
+    }
+
     /// Returns e raised to the power of this [`Complex`].
     pub fn exp(self) -> Self {
         Self::new(T::cos(self.imag), T::sin(self.imag)) * T::exp(self.real)
-    }
-
-    /// Returns base raised to the power of this [`Complex`].
-    pub fn expf(self, base: T) -> Self {
-        Self::exp(self * T::ln(base))
     }
 
     /// Returns the natural logarithm of the absolute value of this [`Complex`].
@@ -363,7 +373,7 @@ impl<T: Float + Display> Display for Complex<T> {
     }
 }
 
-/// Struct representing a complex number
+/// Struct representing a complex number in polar form
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct ComplexPolar<T: Float> {
     radius: T,
@@ -388,6 +398,39 @@ impl<T: Float> ComplexPolar<T> {
     /// Returns the imaginary number i
     pub fn i() -> Self {
         Self::new(T::one(), T::pi())
+    }
+
+    /// Returns the real part of this [`ComplexPolar`]
+    pub fn real(self) -> T {
+        self.radius * T::cos(self.angle)
+    }
+
+    /// Returns the imaginary part of this [`ComplexPolar`]
+    pub fn imag(self) -> T {
+        self.radius * T::sin(self.angle)
+    }
+
+    /// Returns the conjugate of this [`ComplexPolar`].
+    pub fn conj(self) -> Self {
+        Self::new(self.radius, self.angle)
+    }
+
+    /// Returns the absolute value of this [`ComplexPolar`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ccmath::ComplexPolar;
+    /// use std::f32;
+    ///
+    /// let z1 = ComplexPolar::new(4.0, f32::consts::PI);
+    /// let z2 = ComplexPolar::new(5.0, f32::consts::PI / 2.0);
+    ///
+    /// assert_eq!(ComplexPolar::abs(z1), 4.0);
+    /// assert_eq!(ComplexPolar::abs(z2), 5.0);
+    /// ```
+    pub fn square_abs(self) -> T {
+        self.radius.powi(2)
     }
 
     /// Returns the absolute value of this [`ComplexPolar`].
@@ -431,6 +474,41 @@ impl<T: Float> ComplexPolar<T> {
     /// Returns this [`ComplexPolar`] raised to float.
     pub fn powf(self, exponent: T) -> Self {
         Self::new(self.radius.powf(exponent), self.angle * exponent)
+    }
+
+    /// Returns this [`ComplexPolar`] raised to a [`Complex`] power.
+    pub fn powc(self, exponent: Complex<T>) -> Self {
+        Complex::powc(self.unpolarize(), exponent).polarize()
+    }
+
+    /// Returns this [`ComplexPolar`] raised to a complex polar power.
+    pub fn powcp(self, exponent: ComplexPolar<T>) -> Self {
+        Complex::powc(self.unpolarize(), exponent.unpolarize()).polarize()
+    }
+
+    /// Returns e raised to the power of this [`ComplexPolar`].
+    pub fn exp(self) -> Self {
+        self.unpolarize().exp().polarize()
+    }
+
+    /// Returns the natural logarithm of the absolute value of this [`ComplexPolar`].
+    pub fn ln_abs(self) -> T {
+        T::ln(self.abs())
+    }
+
+    /// Returns the natural logarithm of this [`ComplexPolar`].
+    pub fn ln(self) -> Self {
+        self.unpolarize().ln().polarize()
+    }
+
+    /// Returns the logarithm base 10 of this [`ComplexPolar`].
+    pub fn log(self) -> Self {
+        self.unpolarize().log().polarize()
+    }
+
+    /// Returns the logarithm base n of this [`Complex`].
+    pub fn logn(self, base: T) -> Self {
+        self.unpolarize().logn(base).polarize()
     }
 }
 
